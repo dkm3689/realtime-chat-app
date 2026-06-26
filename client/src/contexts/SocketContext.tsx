@@ -20,7 +20,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token) return;
 
-    const s = io('http://localhost:3001', {
+    const s = io(import.meta.env.VITE_SERVER_URL || 'http://localhost:3001', {
       auth: { token },
       transports: ['websocket'],
     });
