@@ -1,6 +1,6 @@
 import { pool } from '../config/database';
 
-async function migrate() {
+export async function runMigrations() {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -48,15 +48,18 @@ async function migrate() {
     `);
 
     await client.query('COMMIT');
-    console.log('Migration complete');
+    console.log('[db] Migrations complete');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Migration failed:', err);
-    process.exit(1);
+    throw err;
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
-migrate();
+// Allow running directly: ts-node src/db/migrate.ts
+if (require.main === module) {
+  runMigrations()
+    .then(() => pool.end())
+    .catch((err) => { console.error('Migration failed:', err); process.exit(1); });
+}

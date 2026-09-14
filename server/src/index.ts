@@ -7,6 +7,7 @@ import authRoutes from './routes/auth';
 import roomsRoutes from './routes/rooms';
 import messagesRoutes from './routes/messages';
 import { initSocket } from './socket';
+import { runMigrations } from './db/migrate';
 
 const app = express();
 const server = http.createServer(app);
@@ -19,20 +20,28 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/messages', messagesRoutes);
 
-initSocket(server).then(() => {
-  server.listen(env.PORT, async () => {
-    try {
-      await pool.query('SELECT 1');
-      console.log('[db] PostgreSQL connected');
-      if (process.env.REDIS_URL) {
-        const { redis } = await import('./config/redis');
-        await redis.ping();
-        console.log('[redis] Redis connected');
-      }
-      console.log(`[server] Listening on http://localhost:${env.PORT}`);
-    } catch (err) {
-      console.error('[server] Startup failed:', err);
-      process.exit(1);
+async function start() {
+  try {
+    await pool.query('SELECT 1');
+    console.log('[db] PostgreSQL connected');
+
+    await runMigrations();
+
+    if (process.env.REDIS_URL) {
+      const { redis } = await import('./config/redis');
+      await redis.ping();
+      console.log('[redis] Redis connected');
     }
-  });
-});
+
+    await initSocket(server);
+
+    server.listen(env.PORT, () => {
+      console.log(`[server] Listening on http://localhost:${env.PORT}`);
+    });
+  } catch (err) {
+    console.error('[server] Startup failed:', err);
+    process.exit(1);
+  }
+}
+
+start();

@@ -16,14 +16,29 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map());
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [hasMore, setHasMore] = useState(false);
 
-  // Load rooms once on mount
+  // Load rooms on mount, retry once on failure
   useEffect(() => {
-    roomsApi.getAll().then(({ data }) => {
-      setRooms(data);
-      if (data.length > 0) setCurrentRoom(data[0]);
-    });
+    let cancelled = false;
+    async function fetchRooms(attempt = 1) {
+      try {
+        const { data } = await roomsApi.getAll();
+        if (cancelled) return;
+        setRooms(data);
+        const general = data.find((r) => r.name === 'general') ?? data[0] ?? null;
+        setCurrentRoom(general);
+      } catch {
+        if (!cancelled && attempt < 3) {
+          setTimeout(() => fetchRooms(attempt + 1), 3000);
+        }
+      } finally {
+        if (!cancelled) setIsLoadingRooms(false);
+      }
+    }
+    fetchRooms();
+    return () => { cancelled = true; };
   }, []);
 
   // Load messages whenever the room changes
@@ -106,6 +121,7 @@ export default function Chat() {
           user={user!}
           onLogout={logout}
           isConnected={isConnected}
+          isLoadingRooms={isLoadingRooms}
         />
       </aside>
 

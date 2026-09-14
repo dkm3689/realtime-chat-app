@@ -107,6 +107,17 @@ aside.online-panel { background: var(--bg-1); border-left: 1px solid var(--borde
 .room-hash { color: var(--text-3); font-size: 16px; font-weight: 400; }
 .room-item.active .room-hash { color: var(--accent); }
 
+/* Room loading skeleton */
+.rooms-loading { padding: 4px 10px; display: flex; flex-direction: column; gap: 4px; }
+.room-skeleton {
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-2) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
 /* Create room form */
 .create-room-form {
   padding: 8px 10px;

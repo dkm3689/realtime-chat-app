@@ -9,6 +9,7 @@ interface Props {
   user: User;
   onLogout: () => void;
   isConnected: boolean;
+  isLoadingRooms: boolean;
 }
 
 export default function Sidebar({
@@ -19,6 +20,7 @@ export default function Sidebar({
   user,
   onLogout,
   isConnected,
+  isLoadingRooms,
 }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [roomName, setRoomName] = useState('');
@@ -96,19 +98,27 @@ export default function Sidebar({
           </form>
         )}
 
-        <ul className="room-list">
-          {rooms.map((room) => (
-            <li key={room.id}>
-              <button
-                className={`room-item ${currentRoom?.id === room.id ? 'active' : ''}`}
-                onClick={() => onSelectRoom(room)}
-              >
-                <span className="room-hash">#</span>
-                <span className="room-name">{room.name}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {isLoadingRooms ? (
+          <div className="rooms-loading">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="room-skeleton" />
+            ))}
+          </div>
+        ) : (
+          <ul className="room-list">
+            {rooms.map((room) => (
+              <li key={room.id}>
+                <button
+                  className={`room-item ${currentRoom?.id === room.id ? 'active' : ''}`}
+                  onClick={() => onSelectRoom(room)}
+                >
+                  <span className="room-hash">#</span>
+                  <span className="room-name">{room.name}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="sidebar-user">
