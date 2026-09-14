@@ -1,21 +1,23 @@
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
-import { createAdapter } from '@socket.io/redis-adapter';
 import { env } from '../config/env';
-import { redisPub, redisSub } from '../config/redis';
 import { pool } from '../config/database';
 import { registerMessageHandlers } from './handlers/message';
 import { registerTypingHandlers } from './handlers/typing';
 import { registerPresenceHandlers } from './handlers/presence';
 
-export function initSocket(server: http.Server) {
+export async function initSocket(server: http.Server) {
   const io = new Server(server, {
     cors: { origin: env.CLIENT_URL, methods: ['GET', 'POST'], credentials: true },
   });
 
-  // Redis adapter — distributes events across all server instances
-  io.adapter(createAdapter(redisPub, redisSub));
+  // Use Redis adapter only when REDIS_URL is explicitly configured (multi-instance deployments)
+  if (process.env.REDIS_URL) {
+    const { createAdapter } = await import('@socket.io/redis-adapter');
+    const { redisPub, redisSub } = await import('../config/redis');
+    io.adapter(createAdapter(redisPub, redisSub));
+  }
 
   io.use(async (socket, next) => {
     try {
